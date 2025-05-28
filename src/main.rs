@@ -40,7 +40,7 @@ fn get_direction(target:&[u8;32], tree:&Vec<Vec<[u8;32]>>, level:usize) -> Direc
     };
 }
 
-fn generate_merkle_proof(hash:&[u8;32], tree:&Vec<Vec<[u8;32]>>) {
+fn generate_merkle_proof<'a>(hash:&'a [u8;32], tree:&'a Vec<Vec<[u8;32]>>) -> Vec<Node<'a>> {
     let mut hash_index = index(hash,&tree[0]);
     let mut merkle_proof:Vec<Node> = vec![];
     let direction:Direction = get_direction(hash,tree,0);
@@ -61,7 +61,7 @@ fn generate_merkle_proof(hash:&[u8;32], tree:&Vec<Vec<[u8;32]>>) {
         let sibling_node = Node {hash: &tree[level][sibling_index], direction:sibling_direction};
         merkle_proof.push(sibling_node);
     }
-    println!("{:?}",merkle_proof);
+    return merkle_proof;
 }
 
 fn generate_merkle_tree(hashes: &Vec::<i32> ) -> Vec<Vec<[u8;32]>> {
@@ -97,11 +97,15 @@ fn main() {
     let content = fs::read_to_string("data.txt").unwrap();
     let leaf_nodes:Vec<i32> = content.split(' ').map(|s| s.trim().parse::<i32>().expect("Invalid number")).collect();
     println!("{:?}",leaf_nodes);
+
     let tree:Vec<Vec<[u8;32]>> = generate_merkle_tree(&leaf_nodes);
+    println!("{:?}",tree);
 
     let mut hasher = Sha256::new();
     hasher.update(&leaf_nodes[0].to_string());
     let target_hash = hasher.finalize().into();
-    generate_merkle_proof(&target_hash, &tree);
+
+    let merkle_proof: Vec<Node> = generate_merkle_proof(&target_hash, &tree);
+    println!("{:?}",merkle_proof);
 
 }
