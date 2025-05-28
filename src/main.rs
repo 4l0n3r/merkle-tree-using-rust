@@ -8,6 +8,10 @@ fn hash_pair(left: &[u8;32], right: &[u8;32]) -> [u8;32] {
     hasher.finalize().into()
 }
 
+fn index(target:&[u8;32], vector:&Vec<[u8;32]>) -> usize {
+    return vector.iter().position(|x| x == target).unwrap()
+}
+
 fn make_even(mut hashes:Vec<[u8;32]>) -> Vec<[u8;32]> {
     if (hashes.len() % 2 != 0) {
         hashes.push(hashes[hashes.len()-1]);
@@ -50,5 +54,6 @@ fn main() {
     let leaf_nodes:Vec<i32> = content.split(' ').map(|s| s.trim().parse::<i32>().expect("Invalid number")).collect();
     println!("{:?}",leaf_nodes);
     let tree:Vec<Vec<[u8;32]>> = generate_merkle_tree(&leaf_nodes);
-//     println!("{:?}",tree);
+
+
 }
