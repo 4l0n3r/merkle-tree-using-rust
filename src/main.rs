@@ -1,6 +1,18 @@
 use std::fs;
 use sha2::{Sha256, Digest};
 
+#[derive(Debug)]
+enum Direction {
+    LEFT,
+    RIGHT
+}
+
+#[derive(Debug)]
+struct Node<'a> {
+    hash: &'a [u8;32],
+    direction: Direction
+}
+
 fn hash_pair(left: &[u8;32], right: &[u8;32]) -> [u8;32] {
     let mut hasher = Sha256::new();
     hasher.update(&left);
@@ -13,12 +25,44 @@ fn index(target:&[u8;32], vector:&Vec<[u8;32]>) -> usize {
 }
 
 fn make_even(mut hashes:Vec<[u8;32]>) -> Vec<[u8;32]> {
-    if (hashes.len() % 2 != 0) {
+    if hashes.len() % 2 != 0 {
         hashes.push(hashes[hashes.len()-1]);
     }
     hashes
 }
 
+fn get_direction(target:&[u8;32], tree:&Vec<Vec<[u8;32]>>, level:usize) -> Direction {
+    let location = index(target,&tree[level]);
+    let direction = if location % 2 == 0 {
+        return Direction::LEFT
+    } else {
+        return Direction::RIGHT
+    };
+}
+
+fn generate_merkle_proof(hash:&[u8;32], tree:&Vec<Vec<[u8;32]>>) {
+    let mut hash_index = index(hash,&tree[0]);
+    let mut merkle_proof:Vec<Node> = vec![];
+    let direction:Direction = get_direction(hash,tree,0);
+    let node = Node {hash, direction};
+
+    merkle_proof.push(node);
+
+    for level in 0..tree.len() {
+        let is_left_child = hash_index % 2 == 0 ;
+        let sibling_direction:Direction;
+        if is_left_child {
+            sibling_direction =  Direction::RIGHT;
+        }
+        else {
+            sibling_direction = Direction::LEFT;
+        }
+        let sibling_index = hash_index / 2;
+        let sibling_node = Node {hash: &tree[level][sibling_index], direction:sibling_direction};
+        merkle_proof.push(sibling_node);
+    }
+    println!("{:?}",merkle_proof);
+}
 
 fn generate_merkle_tree(hashes: &Vec::<i32> ) -> Vec<Vec<[u8;32]>> {
     if hashes.len() == 0 {
@@ -55,5 +99,9 @@ fn main() {
     println!("{:?}",leaf_nodes);
     let tree:Vec<Vec<[u8;32]>> = generate_merkle_tree(&leaf_nodes);
 
+    let mut hasher = Sha256::new();
+    hasher.update(&leaf_nodes[0].to_string());
+    let target_hash = hasher.finalize().into();
+    generate_merkle_proof(&target_hash, &tree);
 
 }
