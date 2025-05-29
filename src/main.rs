@@ -33,11 +33,11 @@ fn make_even(mut hashes:Vec<[u8;32]>) -> Vec<[u8;32]> {
 
 fn get_direction(target:&[u8;32], tree:&Vec<Vec<[u8;32]>>, level:usize) -> Direction {
     let location = index(target,&tree[level]);
-    let direction = if location % 2 == 0 {
-        return Direction::LEFT
+    if location % 2 == 0 {
+        Direction::LEFT
     } else {
-        return Direction::RIGHT
-    };
+        Direction::RIGHT
+    }
 }
 
 fn generate_merkle_proof<'a>(hash:&'a [u8;32], tree:&'a Vec<Vec<[u8;32]>>) -> Vec<Node<'a>> {
@@ -48,16 +48,19 @@ fn generate_merkle_proof<'a>(hash:&'a [u8;32], tree:&'a Vec<Vec<[u8;32]>>) -> Ve
 
     merkle_proof.push(node);
 
-    for level in 0..tree.len() {
+    for level in 0..tree.len()-1 {
         let is_left_child = hash_index % 2 == 0 ;
         let sibling_direction:Direction;
+        let sibling_index;
         if is_left_child {
             sibling_direction =  Direction::RIGHT;
+            sibling_index = hash_index + 1;
         }
         else {
             sibling_direction = Direction::LEFT;
+            sibling_index = hash_index - 1;
         }
-        let sibling_index = hash_index / 2;
+
         let sibling_node = Node {hash: &tree[level][sibling_index], direction:sibling_direction};
         merkle_proof.push(sibling_node);
     }
@@ -90,6 +93,7 @@ fn generate_merkle_tree(hashes: &Vec::<i32> ) -> Vec<Vec<[u8;32]>> {
         tree.push(current_branch);
         current_branch = combined_hashes;
     }
+    tree.push(current_branch);
     return tree;
 }
 
