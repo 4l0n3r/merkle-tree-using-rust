@@ -41,6 +41,12 @@ fn get_direction(target:&[u8;32], tree:&Vec<Vec<[u8;32]>>, level:usize) -> Direc
 }
 
 fn generate_merkle_proof<'a>(hash:&'a [u8;32], tree:&'a Vec<Vec<[u8;32]>>) -> Vec<Node<'a>> {
+
+    if tree.is_empty() {
+        return vec![];
+    }
+
+
     let mut hash_index = index(hash,&tree[0]);
     let mut merkle_proof:Vec<Node> = vec![];
     let direction:Direction = get_direction(hash,tree,0);
@@ -63,6 +69,7 @@ fn generate_merkle_proof<'a>(hash:&'a [u8;32], tree:&'a Vec<Vec<[u8;32]>>) -> Ve
 
         let sibling_node = Node {hash: &tree[level][sibling_index], direction:sibling_direction};
         merkle_proof.push(sibling_node);
+        hash_index /= 2;
     }
     return merkle_proof;
 }
